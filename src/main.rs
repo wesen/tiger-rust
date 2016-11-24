@@ -48,7 +48,12 @@ fn main() {
     println!("{:?}", parse(r#"foobar { i = 4, j = 2 }"#));
     println!("{:?}", parse(r#"foobar {  }"#));
     println!("{:?}", parse(r#"foobar"#));
+    println!("{:?}", parse(r#"foobar[2]"#));
+    println!("{:?}", parse(r#"foobar[2].foobar"#));
+    println!("{:?}", parse(r#"foobar[2][3]"#));
     println!("{:?}", parse(r#"foobar.blabla"#));
+    println!("{:?}", parse(r#"foobar.blabla[2]"#));
+    println!("{:?}", parse(r#"foobar.blabla[2] of 4"#));
     println!("{:?}", parse(r#"foobar.blabla.blip.blip"#));
     println!("{:?}", parse(r#"foobar.blabla.blip.blip[foobar]"#));
 

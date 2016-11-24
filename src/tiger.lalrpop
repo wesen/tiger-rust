@@ -179,6 +179,10 @@ Exp: Box<Exp> = {
    <pos:@L> "new" <typ:Ident> => Box::new(NewExp(typ, pos)),
 
    Var => Box::new(VarExp(<>)),
+   <pos:@L> <is:IdentSubscript> => {
+      let v = Box::new(SubscriptVar(Box::new(SimpleVar(is.0, pos)), is.1, pos));
+      Box::new(VarExp(v))
+   },
 };
 
 IdentSubscript: (Symbol, Box<Exp>) = {
@@ -190,10 +194,17 @@ Var: Box<Var> = {
    ComplexVar,
 };
 
-ComplexVar: Box<var> = {
+ComplexVar: Box<Var> = {
    <pos:@L> <v:Var> "." <fid:Ident> => Box::new(FieldVar(v, fid, pos)),
-   <pos:@L> <is:IdentSubscript> => Box::new(SubscriptVar(Box::new(SimpleVar(is.0, pos)), e, pos)),
-   <pos:@L> <v:Var> "[" <e:Exp> "]" => Box::new(SubscriptVar(v, e, pos)),
+   <pos:@L> <is:IdentSubscript> "." <fid:Ident> => {
+      let v = Box::new(SubscriptVar(Box::new(SimpleVar(is.0, pos)), is.1, pos));
+      Box::new(FieldVar(v, fid, pos))
+   },
+   <pos:@L> <is:IdentSubscript> "[" <e:Exp> "]" => {
+      let v = Box::new(SubscriptVar(Box::new(SimpleVar(is.0, pos)), is.1, pos));
+      Box::new(SubscriptVar(v, e, pos))
+   },
+   <pos:@L> <v:ComplexVar> "[" <e:Exp> "]" => Box::new(SubscriptVar(v, e, pos)),
 };
 
 Fields = Comma<Field>;
