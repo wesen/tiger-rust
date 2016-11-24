@@ -6,6 +6,10 @@ pub mod lexer;
 pub mod tiger;
 pub mod ast;
 
+extern crate lalrpop_util;
+
+use lexer::Lexer;
+
 #[test]
 fn calculator4() {
     assert_eq!(&format!("{:?}", calculator4::parse_Expr("22 * 44 + 66").unwrap()),
@@ -31,11 +35,18 @@ fn calculator4() {
     assert_eq!(errors.len(), 4);
 }
 
-fn main() {
-    let program = "nil";
-    let s = tiger::parse_Program(program);
-    println!("{:?}", s);
+fn parse(s: &str) -> Result<Box<ast::Exp>, lalrpop_util::ParseError<usize,lexer::Token,()>> {
+    let l = Lexer::new(s);
+    tiger::parse_Program(l)
+}
 
-    println!("{:?}", tiger::parse_Program("123"));
-    println!("{:?}", tiger::parse_Program("\"foobar\""));
+fn main() {
+    println!("{:?}", parse("nil"));;
+    println!("{:?}", parse("123123"));;
+    println!("{:?}", parse(r#""foobar""#));
+
+    let lex = lexer::Lexer::new("function foobar() { 123; }");
+    for l in lex {
+        println!("{:?}", l);
+    }
 }

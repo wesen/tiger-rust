@@ -3,6 +3,7 @@ use std::io::BufReader;
 #[derive(PartialEq, Debug)]
 pub enum Token {
     Ident(String),
+    String(String),
 
     While,
     For,
@@ -51,7 +52,6 @@ pub enum Token {
     Comment,
 }
 
-
 lexer! {
     fn next_token(text: 'a) -> (Token, &'a str);
 
@@ -87,6 +87,9 @@ lexer! {
         }, text)
     },
 
+    r#""[a-zA-Z_][a-zA-Z0-9_]*""# => { let len = text.len();
+               (Token::String(text[1..len-1].to_owned()), text)
+    },
     r#"[a-zA-Z_][a-zA-Z0-9_]*"# => (Token::Ident(text.to_owned()), text),
 
     r#":"# => (Token::Colon, text),
@@ -144,8 +147,8 @@ fn span_in(s: &str, t: &str) -> Span {
 }
 
 impl<'a> Iterator for Lexer<'a> {
-    type Item = (Token, Span);
-    fn next(&mut self) -> Option<(Token, Span)> {
+    type Item = (usize, Token, usize);
+    fn next(&mut self) -> Option<(usize, Token, usize)> {
         loop {
             let tok = if let Some(tok) = next_token(&mut self.remaining) {
                 tok
@@ -157,7 +160,8 @@ impl<'a> Iterator for Lexer<'a> {
                     continue;
                 }
                 (tok, span) => {
-                    return Some((tok, span_in(span, self.original)));
+                    let s = span_in(span, self.original);
+                    return Some((s.lo, tok, s.hi));
                 }
             }
         }

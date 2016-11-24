@@ -87,26 +87,29 @@
 use std::str::FromStr;
 use ast::Exp::*;
 use ast::{Position, Symbol, Var, Exp, FunDecl, TypeDecl, Dec, Field, Ty, Oper};
+use lexer::Token;
 
 grammar;
+
+extern {
+    type Location = usize;
+    enum Token {
+        "(" => Token::LParen,
+        ")" => Token::RParen,
+        Nil => Token::Nil,
+        Integer => Token::Integer(<i32>),
+        Ident => Token::Ident(<String>),
+String => Token::String(<String>),
+    }
+}
 
 pub Program: Box<Exp> = {
    Exp,
 };
 
 Exp: Box<Exp> = {
-   "nil" => Box::new(NilExp),
+   Nil => Box::new(NilExp),
    Integer => Box::new(IntExp(<>)),
    <l:@L> <s:String> => Box::new(StringExp(s, l))
 };
 
-Integer: i32 = {
-   r"[0-9]+" => i32::from_str(<>).unwrap()
-};
-
-String: String = {
-   r#""[^,"]+""# => {
-      let len = <>.len();
-      String::from( &<>[1..(len - 1)])
-   }
-};
