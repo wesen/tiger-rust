@@ -170,8 +170,8 @@ Exp: Box<Exp> = {
    Integer => Box::new(IntExp(<>)),
    <l:@L> <s:String> => Box::new(StringExp(s, l)),
 
-   <pos:@L> <typ:Ident> "[" <size:Exp> "]" "of" <init:Exp> =>
-      Box::new(ArrayExp { typ: typ, size: size, init: init, pos: pos } ),
+   <pos:@L> <is:IdentSubscript> "of" <init:Exp> =>
+      Box::new(ArrayExp { typ: is.0, size: is.1, init: init, pos: pos } ),
 
    <pos:@L> <typ:Ident> "{" <fields:Fields> "}" =>
       Box::new(RecordExp { typ: typ, fields: fields, pos: pos}),
@@ -181,9 +181,18 @@ Exp: Box<Exp> = {
    Var => Box::new(VarExp(<>)),
 };
 
+IdentSubscript: (Symbol, Box<Exp>) = {
+   <typ:Ident> "[" <size:Exp> "]" => (typ, size),
+};
+
 Var: Box<Var> = {
    <pos:@L> <id:Ident> => Box::new(SimpleVar(id, pos)),
+   ComplexVar,
+};
+
+ComplexVar: Box<var> = {
    <pos:@L> <v:Var> "." <fid:Ident> => Box::new(FieldVar(v, fid, pos)),
+   <pos:@L> <is:IdentSubscript> => Box::new(SubscriptVar(Box::new(SimpleVar(is.0, pos)), e, pos)),
    <pos:@L> <v:Var> "[" <e:Exp> "]" => Box::new(SubscriptVar(v, e, pos)),
 };
 
