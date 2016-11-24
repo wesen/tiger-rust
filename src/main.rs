@@ -35,27 +35,32 @@ fn calculator4() {
     assert_eq!(errors.len(), 4);
 }
 
-fn parse(s: &str) -> Result<Box<ast::Exp>, lalrpop_util::ParseError<usize,lexer::Token,()>> {
+fn parse(s: &str) {
     let l = Lexer::new(s);
-    tiger::parse_Program(l)
+    let p = tiger::parse_Program(l);
+    println!("{}", s);
+    println!("{:?}", p);
+    println!("");
 }
 
 fn main() {
-    println!("{:?}", parse("nil"));;
-    println!("{:?}", parse("123123"));;
-    println!("{:?}", parse(r#""foobar""#));
-    println!("{:?}", parse(r#"int[5] of 2"#));
-    println!("{:?}", parse(r#"foobar { i = 4, j = 2 }"#));
-    println!("{:?}", parse(r#"foobar {  }"#));
-    println!("{:?}", parse(r#"foobar"#));
-    println!("{:?}", parse(r#"foobar[2]"#));
-    println!("{:?}", parse(r#"foobar[2].foobar"#));
-    println!("{:?}", parse(r#"foobar[2][3]"#));
-    println!("{:?}", parse(r#"foobar.blabla"#));
-    println!("{:?}", parse(r#"foobar.blabla[2]"#));
-    println!("{:?}", parse(r#"foobar.blabla[2] of 4"#));
-    println!("{:?}", parse(r#"foobar.blabla.blip.blip"#));
-    println!("{:?}", parse(r#"foobar.blabla.blip.blip[foobar]"#));
+    parse("nil");;
+    parse("123123");;
+    parse(r#""foobar""#);
+    parse(r#"int[5] of 2"#);
+    parse(r#"foobar { i = 4, j = 2 }"#);
+    parse(r#"foobar {  }"#);
+    parse(r#"foobar"#);
+    parse(r#"foobar[2]"#);
+    parse(r#"foobar[2].foobar"#);
+    parse(r#"foobar[2][3]"#);
+    parse(r#"foobar.blabla"#);
+    parse(r#"foobar.blabla[2]"#);
+    parse(r#"foobar.blabla[2] of 4"#);
+    parse(r#"foobar.blabla.blip.blip"#);
+    parse(r#"foobar.blabla.blip.blip[foobar]"#);
+    parse(r#"foobar("bla", angry.foobar, foo[0])"#);
+    parse(r#"foo[34] of 34 + 36 + 89 * 89"#)
 
 //    let lex = lexer::Lexer::new("function foobar() { 123; }");
 //    for l in lex {

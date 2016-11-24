@@ -149,8 +149,8 @@ String => Token::String(<String>),
     }
 }
 
-Comma<T>: Vec<T> = { // (0)
-    <v:(<T> ",")*> <e:T?> => match e { // (1)
+Comma<T, S>: Vec<T> = { // (0)
+    <v:(<T> S)*> <e:T?> => match e { // (1)
         None=> v,
         Some(e) => {
             let mut v = v;
@@ -160,29 +160,79 @@ Comma<T>: Vec<T> = { // (0)
     }
 };
 
-
 pub Program: Box<Exp> = {
    Exp,
 };
 
-Exp: Box<Exp> = {
+Exps = Comma<Exp, ";">;
+Args = Comma<Exp, ",">;
+
+Term: Box<Exp> = {
    "nil" => Box::new(NilExp),
    Integer => Box::new(IntExp(<>)),
    <l:@L> <s:String> => Box::new(StringExp(s, l)),
 
-   <pos:@L> <is:IdentSubscript> "of" <init:Exp> =>
-      Box::new(ArrayExp { typ: is.0, size: is.1, init: init, pos: pos } ),
-
    <pos:@L> <typ:Ident> "{" <fields:Fields> "}" =>
       Box::new(RecordExp { typ: typ, fields: fields, pos: pos}),
-
-   <pos:@L> "new" <typ:Ident> => Box::new(NewExp(typ, pos)),
 
    Var => Box::new(VarExp(<>)),
    <pos:@L> <is:IdentSubscript> => {
       let v = Box::new(SubscriptVar(Box::new(SimpleVar(is.0, pos)), is.1, pos));
       Box::new(VarExp(v))
    },
+
+   <pos:@L> <id:Ident> "(" <a:Args> ")" => Box::new(CallExp { func: id, args: a, pos: pos }),
+
+   // method call, not implemented yet
+   //   <pos:@L> <v:Var> "." <id:Ident> "(" <a:Args> ")" => {
+   //   }
+
+   // new, not implemented yet
+   // <pos:@L> "new" <typ:Ident> => Box::new(NewExp(typ, pos)),
+
+//   <pos:@L> "-" <e:Exp> => Box::new(OpExp {
+//      left: Box::new(IntExp(0)),
+//      op: Oper::MinusOp,
+//      right: e,
+//      pos: pos
+//   }),
+
+   "(" <Exp> ")",
+};
+
+Exp: Box<Exp> = {
+   <pos:@L> <is:IdentSubscript> "of" <init:Exp> =>
+   Box::new(ArrayExp { typ: is.0, size: is.1, init: init, pos: pos } ),
+   MathExp,
+};
+
+Tier<Op,NextTier>: Box<Exp> = {
+   <pos:@L> <left:Tier<Op,NextTier>> <op:Op> <right:NextTier> =>
+      Box::new(OpExp{ left: left, right: right, op: op, pos: pos }),
+   NextTier
+};
+
+MathExp = Tier<LogicOp, ArithExp>;
+ArithExp = Tier<ExpOp, FactorExp>;
+FactorExp = Tier<FactorOp, Term>;
+
+ExpOp: Oper = {
+   "+" => Oper::PlusOp,
+   "-" => Oper::MinusOp,
+};
+
+LogicOp: Oper = {
+   "=" => Oper::EqOp,
+   "<>" => Oper::NeqOp,
+   "<" => Oper::LtOp,
+   "<=" => Oper::LeOp,
+   ">" => Oper::GtOp,
+   ">=" => Oper::GeOp,
+};
+
+FactorOp: Oper = {
+   "*" => Oper::TimesOp,
+   "/" => Oper::DivideOp,
 };
 
 IdentSubscript: (Symbol, Box<Exp>) = {
@@ -207,7 +257,7 @@ ComplexVar: Box<Var> = {
    <pos:@L> <v:ComplexVar> "[" <e:Exp> "]" => Box::new(SubscriptVar(v, e, pos)),
 };
 
-Fields = Comma<Field>;
+Fields = Comma<Field, ",">;
 Field: (Symbol, Box<Exp>, Position) = {
    <pos:@L> <id:Ident> "=" <e:Exp> => (id, e, pos),
 };
