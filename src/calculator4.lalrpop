@@ -1,0 +1,48 @@
+use std::str::FromStr;
+use ast::{Expr, Opcode};
+use lalrpop_util::ParseError;
+
+grammar<'err>(errors: &'err mut Vec<ParseError<usize, (usize, &'input str), ()>>);
+
+pub Expr: Box<Expr> = {
+   Expr ExprOp Factor => Box::new(Expr::Op(<>)),
+   Factor,
+};
+
+ExprOp: Opcode = {
+   "+" => Opcode::Add,
+   "-" => Opcode::Sub,
+};
+
+Factor: Box<Expr> = {
+   Factor FactorOp Term => Box::new(Expr::Op(<>)),
+   Term,
+};
+
+FactorOp: Opcode = {
+   "*" => Opcode::Mul,
+   "/" => Opcode::Div,
+};
+
+Term: Box<Expr> = {
+   Num => Box::new(Expr::Number(<>)),
+   "(" <Expr> ")",
+   error => { errors.push(<>); Box::new(Expr::Error) },
+};
+
+Num: i32 = {
+   r"[0-9]+" => i32::from_str(<>).unwrap()
+};
+
+pub Exprs = Comma<Expr>;
+
+Comma<T>: Vec<T> = {
+   <v:(<T> ",")*> <e:T?> => match e {
+      None => v,
+      Some(e) => {
+         let mut v = v;
+         v.push(e);
+         v
+      }
+    }
+};

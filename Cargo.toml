@@ -2,5 +2,13 @@
 name = "tiger-rust"
 version = "0.1.0"
 authors = ["Manuel Odendahl <wesen@ruinwesen.com>"]
+build = "build.rs"
 
 [dependencies]
+
+[dependencies.lalrpop-util]
+version = "0.12.0"
+
+[build-dependencies.lalrpop]
+version = "=0.12.1"
+
