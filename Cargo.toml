@@ -5,6 +5,7 @@ authors = ["Manuel Odendahl <wesen@ruinwesen.com>"]
 build = "build.rs"
 
 [dependencies]
+plex = { git = "https://github.com/goffrie/plex" }
 
 [dependencies.lalrpop-util]
 version = "0.12.0"

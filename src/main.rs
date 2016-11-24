@@ -1,6 +1,10 @@
-pub mod calculator4;
-pub mod tiger;
+#![feature(plugin)]
+#![plugin(plex)]
+extern crate plex;
 
+pub mod calculator4;
+pub mod lexer;
+pub mod tiger;
 pub mod ast;
 
 #[test]
