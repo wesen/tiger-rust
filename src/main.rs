@@ -1,4 +1,5 @@
 pub mod calculator4;
+pub mod tiger;
 
 pub mod ast;
 
@@ -28,5 +29,10 @@ fn calculator4() {
 }
 
 fn main() {
-    println!("Hello, world!");
+    let program = "nil";
+    let s = tiger::parse_Program(program);
+    println!("{:?}", s);
+
+    println!("{:?}", tiger::parse_Program("123"));
+    println!("{:?}", tiger::parse_Program("\"foobar\""));
 }
