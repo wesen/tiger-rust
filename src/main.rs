@@ -1,6 +1,3 @@
-pub mod calculator1;
-pub mod calculator2;
-pub mod calculator3;
 pub mod calculator4;
 
 pub mod ast;
@@ -28,29 +25,6 @@ fn calculator4() {
     "[(error * error)]");
 
     assert_eq!(errors.len(), 4);
-}
-
-#[test]
-fn calculator3() {
-    assert!(calculator3::parse_Expr("22 + 23").is_ok());
-    assert_eq!(calculator3::parse_Expr("22 + 23").unwrap(), 45);
-    assert_eq!(calculator3::parse_Expr("2 + (3 * (4 + 5))").unwrap(), 29);
-}
-
-#[test]
-fn calculator1() {
-    assert!(calculator1::parse_Term("22").is_ok());
-    assert!(calculator1::parse_Term("(22)").is_ok());
-    assert!(calculator1::parse_Term("((((22))))").is_ok());
-    assert!(calculator1::parse_Term("((22)").is_err());
-}
-
-#[test]
-fn calculator2() {
-    assert!(calculator2::parse_Term("22").is_ok());
-    assert!(calculator2::parse_Term("(22)").is_ok());
-    assert!(calculator2::parse_Term("((((22))))").is_ok());
-    assert!(calculator2::parse_Term("((22)").is_err());
 }
 
 fn main() {
