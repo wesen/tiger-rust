@@ -1,0 +1,6 @@
+[package]
+name = "tiger-rust"
+version = "0.1.0"
+authors = ["Manuel Odendahl <wesen@ruinwesen.com>"]
+
+[dependencies]
