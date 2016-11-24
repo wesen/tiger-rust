@@ -44,9 +44,16 @@ fn main() {
     println!("{:?}", parse("nil"));;
     println!("{:?}", parse("123123"));;
     println!("{:?}", parse(r#""foobar""#));
+    println!("{:?}", parse(r#"int[5] of 2"#));
+    println!("{:?}", parse(r#"foobar { i = 4, j = 2 }"#));
+    println!("{:?}", parse(r#"foobar {  }"#));
+    println!("{:?}", parse(r#"foobar"#));
+    println!("{:?}", parse(r#"foobar.blabla"#));
+    println!("{:?}", parse(r#"foobar.blabla.blip.blip"#));
+    println!("{:?}", parse(r#"foobar.blabla.blip.blip[foobar]"#));
 
-    let lex = lexer::Lexer::new("function foobar() { 123; }");
-    for l in lex {
-        println!("{:?}", l);
-    }
+//    let lex = lexer::Lexer::new("function foobar() { 123; }");
+//    for l in lex {
+//        println!("{:?}", l);
+//    }
 }

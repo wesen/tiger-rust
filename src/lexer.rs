@@ -22,6 +22,7 @@ pub enum Token {
     Do,
     Of,
     Nil,
+    New,
 
     Integer(i32),
     Colon,
@@ -78,6 +79,7 @@ lexer! {
     r#"do"# => (Token::Do, text),
     r#"of"# => (Token::Of, text),
     r#"nil"# => (Token::Nil, text),
+    r#"new"# => (Token::New, text),
 
         r#"[0-9]+"# => {
         (if let Ok(i) = text.parse() {

@@ -86,6 +86,8 @@
 
 use std::str::FromStr;
 use ast::Exp::*;
+use ast::Var::*;
+use ast::Ty::*;
 use ast::{Position, Symbol, Var, Exp, FunDecl, TypeDecl, Dec, Field, Ty, Oper};
 use lexer::Token;
 
@@ -94,22 +96,99 @@ grammar;
 extern {
     type Location = usize;
     enum Token {
-        "(" => Token::LParen,
-        ")" => Token::RParen,
-        Nil => Token::Nil,
-        Integer => Token::Integer(<i32>),
-        Ident => Token::Ident(<String>),
+
+"(" => Token::LParen,
+")" => Token::RParen,
+"[" => Token::LBracket,
+"]" => Token::RBracket,
+"{" => Token::LBrace,
+"}" => Token::RBrace,
+
+"," => Token::Comma,
+";" => Token::SemiColon,
+":" => Token::Colon,
+
+"." => Token::Dot,
+"+" => Token::Plus,
+"-" => Token::Minus,
+"*" => Token::Star,
+"/" => Token::Slash,
+"=" => Token::Equal,
+"<>" => Token::NotEqual,
+"<" => Token::Lower,
+"<=" => Token::LowerEqual,
+">" => Token::Greater,
+">=" => Token::GreaterEqual,
+"&" => Token::Ampersand,
+"|" => Token::Pipe,
+":=" => Token::Assign,
+
+"nil" => Token::Nil,
+"of" => Token::Of,
+"while" => Token::While,
+"for" => Token::For,
+"to" => Token::To,
+"break" => Token::Break,
+"let" => Token::Let,
+"in" => Token::In,
+"end" => Token::End,
+"function" => Token::Function,
+"var" => Token::Var,
+"type" => Token::Type,
+"array" => Token::Array,
+"if" => Token::If,
+"then" => Token::Then,
+"else" => Token::Else,
+"new" => Token::New,
+"do" => Token::Do,
+
+Integer => Token::Integer(<i32>),
+Ident => Token::Ident(<String>),
 String => Token::String(<String>),
+
     }
 }
+
+Comma<T>: Vec<T> = { // (0)
+    <v:(<T> ",")*> <e:T?> => match e { // (1)
+        None=> v,
+        Some(e) => {
+            let mut v = v;
+            v.push(e);
+            v
+        }
+    }
+};
+
 
 pub Program: Box<Exp> = {
    Exp,
 };
 
 Exp: Box<Exp> = {
-   Nil => Box::new(NilExp),
+   "nil" => Box::new(NilExp),
    Integer => Box::new(IntExp(<>)),
-   <l:@L> <s:String> => Box::new(StringExp(s, l))
+   <l:@L> <s:String> => Box::new(StringExp(s, l)),
+
+   <pos:@L> <typ:Ident> "[" <size:Exp> "]" "of" <init:Exp> =>
+      Box::new(ArrayExp { typ: typ, size: size, init: init, pos: pos } ),
+
+   <pos:@L> <typ:Ident> "{" <fields:Fields> "}" =>
+      Box::new(RecordExp { typ: typ, fields: fields, pos: pos}),
+
+   <pos:@L> "new" <typ:Ident> => Box::new(NewExp(typ, pos)),
+
+   Var => Box::new(VarExp(<>)),
+};
+
+Var: Box<Var> = {
+   <pos:@L> <id:Ident> => Box::new(SimpleVar(id, pos)),
+   <pos:@L> <v:Var> "." <fid:Ident> => Box::new(FieldVar(v, fid, pos)),
+   <pos:@L> <v:Var> "[" <e:Exp> "]" => Box::new(SubscriptVar(v, e, pos)),
+};
+
+Fields = Comma<Field>;
+Field: (Symbol, Box<Exp>, Position) = {
+   <pos:@L> <id:Ident> "=" <e:Exp> => (id, e, pos),
 };
 
