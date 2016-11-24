@@ -70,7 +70,7 @@ pub enum Exp {
         typ: Symbol,
         pos: Position,
     },
-    SeqExp(Vec<(Box<Exp>, Position)>),
+    SeqExp(Vec<Box<Exp>>),
     AssignExp {
         var: Box<Var>,
         exp: Box<Exp>,

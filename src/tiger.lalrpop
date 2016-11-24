@@ -167,41 +167,24 @@ pub Program: Box<Exp> = {
 Exps = Comma<Exp, ";">;
 Args = Comma<Exp, ",">;
 
-Term: Box<Exp> = {
-   "nil" => Box::new(NilExp),
-   Integer => Box::new(IntExp(<>)),
-   <l:@L> <s:String> => Box::new(StringExp(s, l)),
-
-   <pos:@L> <typ:Ident> "{" <fields:Fields> "}" =>
-      Box::new(RecordExp { typ: typ, fields: fields, pos: pos}),
-
-   Var => Box::new(VarExp(<>)),
-   <pos:@L> <is:IdentSubscript> => {
-      let v = Box::new(SubscriptVar(Box::new(SimpleVar(is.0, pos)), is.1, pos));
-      Box::new(VarExp(v))
-   },
-
-   <pos:@L> <id:Ident> "(" <a:Args> ")" => Box::new(CallExp { func: id, args: a, pos: pos }),
-
-   // method call, not implemented yet
-   //   <pos:@L> <v:Var> "." <id:Ident> "(" <a:Args> ")" => {
-   //   }
-
-   // new, not implemented yet
-   // <pos:@L> "new" <typ:Ident> => Box::new(NewExp(typ, pos)),
-
-//   <pos:@L> "-" <e:Exp> => Box::new(OpExp {
-//      left: Box::new(IntExp(0)),
-//      op: Oper::MinusOp,
-//      right: e,
-//      pos: pos
-//   }),
-
-   "(" <Exp> ")",
+Exp: Box<Exp> = {
+   LoopExp,
 };
 
-Exp: Box<Exp> = {
-   <pos:@L> <is:IdentSubscript> "of" <init:Exp> =>
+LoopExp: Box<Exp> = {
+   <pos:@L> "while" <e1:LoopExp> "do" <e2:LoopExp> => Box::new(WhileExp{ test: e1, body: e2, pos: pos }),
+      <pos:@L> "for" <var:Ident> ":=" <lo:LoopExp> "to" <hi:LoopExp> "do" <body:LoopExp> =>
+   Box::new(ForExp{var: var, escape: false, lo: lo, hi: hi, body: body, pos: pos }),
+   AssignExp,
+};
+
+AssignExp: Box<Exp> = {
+   <pos:@L> <var:Var> ":=" <exp:AssignExp> => Box::new(AssignExp{var: var, exp: exp, pos: pos}),
+   ArrayExp,
+};
+
+ArrayExp: Box<Exp> = {
+   <pos:@L> <is:IdentSubscript> "of" <init:ArrayExp> =>
    Box::new(ArrayExp { typ: is.0, size: is.1, init: init, pos: pos } ),
    MathExp,
 };
@@ -233,6 +216,34 @@ LogicOp: Oper = {
 FactorOp: Oper = {
    "*" => Oper::TimesOp,
    "/" => Oper::DivideOp,
+};
+
+Term: Box<Exp> = {
+   "nil" => Box::new(NilExp),
+   <pos:@L> "break" => Box::new(BreakExp(pos)),
+   Integer => Box::new(IntExp(<>)),
+   <pos:@L> <s:String> => Box::new(StringExp(s, pos)),
+
+   <pos:@L> <typ:Ident> "{" <fields:Fields> "}" =>
+   Box::new(RecordExp { typ: typ, fields: fields, pos: pos}),
+
+   Var => Box::new(VarExp(<>)),
+   <pos:@L> <is:IdentSubscript> => {
+      let v = Box::new(SubscriptVar(Box::new(SimpleVar(is.0, pos)), is.1, pos));
+      Box::new(VarExp(v))
+   },
+
+   <pos:@L> <id:Ident> "(" <a:Args> ")" => Box::new(CallExp { func: id, args: a, pos: pos }),
+
+//   <pos:@L> "-" <e:Exp> => Box::new(OpExp {
+//      left: Box::new(IntExp(0)),
+//      op: Oper::MinusOp,
+//      right: e,
+//      pos: pos
+//   }),
+
+
+   "(" <exps:Exps> ")" => Box::new(SeqExp(exps)),
 };
 
 IdentSubscript: (Symbol, Box<Exp>) = {
