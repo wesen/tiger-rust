@@ -37,8 +37,9 @@ impl Debug for Opcode {
     }
 }
 
+use symbol;
+pub type Symbol = symbol::SymbolId;
 pub type Position = usize;
-pub type Symbol = String;
 
 #[derive(Debug)]
 pub enum Var {
@@ -79,7 +80,7 @@ pub enum Exp {
     IfExp {
         test: Box<Exp>,
         then_: Box<Exp>,
-        else_: Box<Exp>,
+        else_: Option<Box<Exp>>,
         pos: Position,
     },
     WhileExp {

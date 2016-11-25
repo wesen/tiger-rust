@@ -1,8 +1,9 @@
-use std::io::BufReader;
+use symbol::{SymbolTable, SymbolId};
 
 #[derive(PartialEq, Debug)]
 pub enum Token {
-    Ident(String),
+    IdentString(String),
+    Ident(SymbolId),
     String(String),
 
     While,
@@ -89,10 +90,12 @@ lexer! {
         }, text)
     },
 
-    r#""[a-zA-Z_][a-zA-Z0-9_]*""# => { let len = text.len();
+    r#""[a-zA-Z_][a-zA-Z0-9_]*""# => {
+         let len = text.len();
                (Token::String(text[1..len-1].to_owned()), text)
     },
-    r#"[a-zA-Z_][a-zA-Z0-9_]*"# => (Token::Ident(text.to_owned()), text),
+
+    r#"[a-zA-Z_][a-zA-Z0-9_]*"# => (Token::IdentString(text.to_owned()), text),
 
     r#":"# => (Token::Colon, text),
     r#","# => (Token::Comma, text),
@@ -126,11 +129,16 @@ lexer! {
 pub struct Lexer<'a> {
     original: &'a str,
     remaining: &'a str,
+    symbol_table: &'a mut SymbolTable,
 }
 
 impl<'a> Lexer<'a> {
-    pub fn new(s: &'a str) -> Lexer<'a> {
-        Lexer { original: s, remaining: s }
+    pub fn new(s: &'a str, symbol_table: &'a mut SymbolTable ) -> Lexer<'a> {
+        Lexer {
+            original: s,
+            remaining: s,
+            symbol_table: symbol_table,
+        }
     }
 }
 
@@ -160,6 +168,10 @@ impl<'a> Iterator for Lexer<'a> {
             match tok {
                 (Token::Whitespace, _) | (Token::Comment, _) => {
                     continue;
+                }
+                (Token::IdentString(ref str), span) => {
+                    let s = span_in(span, self.original);
+                    return Some((s.lo, Token::Ident(self.symbol_table.symbol(str)), s.hi));
                 }
                 (tok, span) => {
                     let s = span_in(span, self.original);

@@ -84,12 +84,12 @@
 ///
 /// op ::= + | - | * | / | = | <> | > | < | >= | <= | & | |
 
-use std::str::FromStr;
 use ast::Exp::*;
 use ast::Var::*;
 use ast::Ty::*;
 use ast::{Position, Symbol, Var, Exp, FunDecl, TypeDecl, Dec, Field, Ty, Oper};
 use lexer::Token;
+use symbol::SymbolId;
 
 grammar;
 
@@ -143,7 +143,7 @@ extern {
 "do" => Token::Do,
 
 Integer => Token::Integer(<i32>),
-Ident => Token::Ident(<String>),
+Ident => Token::Ident(<SymbolId>),
 String => Token::String(<String>),
 
     }
@@ -168,13 +168,36 @@ Exps = Comma<Exp, ";">;
 Args = Comma<Exp, ",">;
 
 Exp: Box<Exp> = {
+   IfExp,
+};
+
+IfExp: Box<Exp> = {
+   IncompleteIfExp,
+   CompleteIfExp,
    LoopExp,
+};
+
+IncompleteIfExp: Box<Exp> = {
+   <pos:@L> "if" <e1:Exp> "then" <e2:Exp> =>
+      Box::new(IfExp {
+         test: e1,
+         then_: e2,
+         else_: None,
+         pos: pos
+      }),
+};
+
+CompleteIfExp: Box<Exp> = {
+   <pos:@L> "if" <e1:Exp> "then" <e2:LoopExp> "else" <e3:Exp> =>
+      Box::new(IfExp { test: e1, then_: e2, else_: Some(e3), pos: pos}),
+   <pos:@L> "if" <e1:Exp> "then" <e2:CompleteIfExp> "else" <e3:Exp> =>
+      Box::new(IfExp { test: e1, then_: e2, else_: Some(e2), pos: pos }),
 };
 
 LoopExp: Box<Exp> = {
    <pos:@L> "while" <e1:LoopExp> "do" <e2:LoopExp> => Box::new(WhileExp{ test: e1, body: e2, pos: pos }),
-      <pos:@L> "for" <var:Ident> ":=" <lo:LoopExp> "to" <hi:LoopExp> "do" <body:LoopExp> =>
-   Box::new(ForExp{var: var, escape: false, lo: lo, hi: hi, body: body, pos: pos }),
+   <pos:@L> "for" <var:Ident> ":=" <lo:LoopExp> "to" <hi:LoopExp> "do" <body:LoopExp> =>
+      Box::new(ForExp{var: var, escape: false, lo: lo, hi: hi, body: body, pos: pos }),
    AssignExp,
 };
 

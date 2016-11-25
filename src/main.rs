@@ -5,6 +5,7 @@ pub mod calculator4;
 pub mod lexer;
 pub mod tiger;
 pub mod ast;
+pub mod symbol;
 
 extern crate lalrpop_util;
 
@@ -24,19 +25,12 @@ fn calculator4() {
     "[((22 * 44) + 66), (13 * 3)]");
     assert_eq!(&format!("{:?}", calculator4::parse_Exprs("22 * 44 + 66, 13*3,").unwrap()),
     "[((22 * 44) + 66), (13 * 3)]");
-    let mut errors = Vec::new();
-    assert_eq!(&format!("{:?}", calculator4::parse_Exprs(&mut errors, "22 * + 3").unwrap()),
-    "[((22 * error) + 3)]");
-    assert_eq!(&format!("{:?}", calculator4::parse_Exprs(&mut errors, "22 * 44 + 66, *3").unwrap()),
-    "[((22 * 44) + 66), (error * 3)]");
-    assert_eq!(&format!("{:?}", calculator4::parse_Exprs(&mut errors, "*").unwrap()),
-    "[(error * error)]");
-
-    assert_eq!(errors.len(), 4);
 }
 
 fn parse(s: &str) {
-    let l = Lexer::new(s);
+    let mut st = symbol::SymbolTable::new();
+
+    let l = Lexer::new(s, &mut st);
     let p = tiger::parse_Program(l);
     println!("{}", s);
     println!("{:?}", p);
@@ -60,7 +54,8 @@ fn main() {
     parse(r#"foobar.blabla.blip.blip"#);
     parse(r#"foobar.blabla.blip.blip[foobar]"#);
     parse(r#"foobar("bla", angry.foobar, foo[0])"#);
-    parse(r#"foo[34] of 34 + 36 + 89 * 89"#)
+    parse(r#"foo[34] of 34 + 36 + 89 * 89"#);
+    parse(r#"if foobar.symbol then 23"#);
 
 //    let lex = lexer::Lexer::new("function foobar() { 123; }");
 //    for l in lex {
