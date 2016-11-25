@@ -172,26 +172,23 @@ Exp: Box<Exp> = {
 };
 
 IfExp: Box<Exp> = {
-   IncompleteIfExp,
-   CompleteIfExp,
-   LoopExp,
+   MatchedExp,
+   UnmatchedExp,
 };
 
-IncompleteIfExp: Box<Exp> = {
-   <pos:@L> "if" <e1:Exp> "then" <e2:Exp> =>
-      Box::new(IfExp {
-         test: e1,
-         then_: e2,
-         else_: None,
-         pos: pos
-      }),
-};
-
-CompleteIfExp: Box<Exp> = {
-   <pos:@L> "if" <e1:Exp> "then" <e2:LoopExp> "else" <e3:Exp> =>
+MatchedExp: Box<Exp> = {
+    <pos:@L> "if" <e1:Exp> "then" <e2:MatchedExp> "else" <e3:MatchedExp> =>
       Box::new(IfExp { test: e1, then_: e2, else_: Some(e3), pos: pos}),
-   <pos:@L> "if" <e1:Exp> "then" <e2:CompleteIfExp> "else" <e3:Exp> =>
-      Box::new(IfExp { test: e1, then_: e2, else_: Some(e2), pos: pos }),
+    LoopExp,
+};
+
+UnmatchedExp: Box<Exp> = {
+   <pos:@L> "if" <e1:Exp> "then" <e2:UnmatchedExp> =>
+      Box::new(IfExp { test: e1, then_: e2, else_: None, pos: pos }),
+   <pos:@L> "if" <e1:Exp> "then" <e2:MatchedExp> =>
+      Box::new(IfExp { test: e1, then_: e2, else_: None, pos: pos }),
+   <pos:@L> "if" <e1:Exp> "then" <e2:MatchedExp> "else" <e3:UnmatchedExp> =>
+      Box::new(IfExp { test: e1, then_: e2, else_: Some(e3), pos: pos }),
 };
 
 LoopExp: Box<Exp> = {
