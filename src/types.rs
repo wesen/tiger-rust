@@ -9,10 +9,10 @@ pub enum Ty<'a> {
     Nil,
     Record {
         unique: Unique,
-        fields: Vec<(SymbolId, &'a Ty<'a>)>,
+        fields: Vec<(SymbolId, &'a Box<Ty<'a>>)>,
     },
     Array {
-        typ: Box<Ty<'a>>,
+        typ: &'a Box<Ty<'a>>,
         unique: Unique,
     },
     Unit,
@@ -21,10 +21,10 @@ pub enum Ty<'a> {
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum EnvEntry<'a> {
-    VarEntry(Ty<'a>),
+    VarEntry(&'a Box<Ty<'a>>),
     FunEntry {
-        formals: Vec<Ty<'a>>,
-        result: Ty<'a>
+        formals: Vec<&'a Box<Ty<'a>>>,
+        result: &'a Box<Ty<'a>>
     }
 }
 
@@ -89,4 +89,32 @@ fn test_table() {
 
 pub type TypeEnv<'a> = Table<'a, Ty<'a>>;
 pub type ValueEnv<'a> = Table<'a, EnvEntry<'a>>;
+
+#[test]
+fn test_table_refs() {
+//    let mut tenv = TypeEnv::new(None);
+//
+//    let ty = Box::new(Ty::Int);
+//    tenv.enter(0, ty);
+//    let ty = tenv.look(0).unwrap();
+//
+//    let ty2 = Box::new(Ty::Array {
+//        unique: 0,
+//        typ: ty,
+//    });
+//
+//    tenv.enter(1, ty2);
+
+    let mut m : BTreeMap<u32, u32> = BTreeMap::new();
+    {
+        m.insert(0, 1);
+    }
+    let t;
+    {
+        t = *m.get(&0).unwrap();
+    }
+    {
+        m.insert(1, t);
+    }
+}
 
