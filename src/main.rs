@@ -6,6 +6,7 @@ pub mod tiger;
 pub mod ast;
 pub mod symbol;
 pub mod types;
+pub mod type_check;
 
 extern crate lalrpop_util;
 
