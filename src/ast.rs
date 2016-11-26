@@ -38,6 +38,7 @@ impl Debug for Opcode {
 }
 
 use symbol;
+
 pub type Symbol = symbol::SymbolId;
 pub type Position = usize;
 
@@ -111,22 +112,15 @@ pub enum Exp {
 }
 
 #[derive(Debug)]
-pub struct FunDecl {
-    name: Symbol,
-    ty: Box<Ty>,
-    pos: Position,
-}
-
-#[derive(Debug)]
-pub struct TypeDecl {
-    name: Symbol,
-    ty: Box<Ty>,
-    pos: Position,
-}
-
-#[derive(Debug)]
 pub enum Dec {
-    FunctionDec(Vec<Box<FunDecl>>),
+    FunDec {
+        name: Symbol,
+        params: Vec<Box<Field>>,
+        result: Option<(Symbol,Position)>,
+        body: Box<Exp>,
+        pos: Position,
+    },
+
     VarDec {
         name: Symbol,
         escape: bool,
@@ -134,15 +128,19 @@ pub enum Dec {
         init: Box<Exp>,
         pos: Position,
     },
-    TypeDec(Vec<Box<TypeDecl>>),
+    TypeDec {
+        name: Symbol,
+        ty: Box<Ty>,
+        pos: Position,
+    }
 }
 
 #[derive(Debug)]
 pub struct Field {
-    name: Symbol,
-    escape: bool,
-    typ: Symbol,
-    pos: Position,
+    pub name: Symbol,
+    pub escape: bool,
+    pub typ: Symbol,
+    pub pos: Position,
 }
 
 #[derive(Debug)]
@@ -154,5 +152,14 @@ pub enum Ty {
 
 #[derive(Debug)]
 pub enum Oper {
-    PlusOp, MinusOp, TimesOp, DivideOp, EqOp, NeqOp, LtOp, LeOp, GtOp, GeOp
+    PlusOp,
+    MinusOp,
+    TimesOp,
+    DivideOp,
+    EqOp,
+    NeqOp,
+    LtOp,
+    LeOp,
+    GtOp,
+    GeOp
 }

@@ -87,7 +87,8 @@
 use ast::Exp::*;
 use ast::Var::*;
 use ast::Ty::*;
-use ast::{Position, Symbol, Var, Exp, FunDecl, TypeDecl, Dec, Field, Ty, Oper};
+use ast::Dec::*;
+use ast::{Position, Symbol, Var, Exp, Dec, Field, Ty, Oper};
 use lexer::Token;
 use symbol::SymbolId;
 
@@ -168,9 +169,11 @@ Exps = Comma<Exp, ";">;
 Args = Comma<Exp, ",">;
 
 Exp: Box<Exp> = {
+   <pos:@L> "let" <decs:Decs> "in" <body:Exp> "end" => Box::new(LetExp { decs: decs, body: body, pos: pos}),
    IfExp,
 };
 
+// see http://marvin.cs.uidaho.edu/Teaching/CS445/danglingElse.html
 IfExp: Box<Exp> = {
    MatchedExp,
    UnmatchedExp,
@@ -244,7 +247,7 @@ Term: Box<Exp> = {
    Integer => Box::new(IntExp(<>)),
    <pos:@L> <s:String> => Box::new(StringExp(s, pos)),
 
-   <pos:@L> <typ:Ident> "{" <fields:Fields> "}" =>
+   <pos:@L> <typ:Ident> "{" <fields:RecordFields> "}" =>
    Box::new(RecordExp { typ: typ, fields: fields, pos: pos}),
 
    Var => Box::new(VarExp(<>)),
@@ -254,14 +257,6 @@ Term: Box<Exp> = {
    },
 
    <pos:@L> <id:Ident> "(" <a:Args> ")" => Box::new(CallExp { func: id, args: a, pos: pos }),
-
-//   <pos:@L> "-" <e:Exp> => Box::new(OpExp {
-//      left: Box::new(IntExp(0)),
-//      op: Oper::MinusOp,
-//      right: e,
-//      pos: pos
-//   }),
-
 
    "(" <exps:Exps> ")" => Box::new(SeqExp(exps)),
 };
@@ -288,8 +283,35 @@ ComplexVar: Box<Var> = {
    <pos:@L> <v:ComplexVar> "[" <e:Exp> "]" => Box::new(SubscriptVar(v, e, pos)),
 };
 
-Fields = Comma<Field, ",">;
-Field: (Symbol, Box<Exp>, Position) = {
+RecordFields = Comma<RecordField, ",">;
+RecordField: (Symbol, Box<Exp>, Position) = {
    <pos:@L> <id:Ident> "=" <e:Exp> => (id, e, pos),
+};
+
+Fields = Comma<Field, ",">;
+Field: Box<Field> = {
+   <pos:@L> <id:Ident> => Box::new(Field{name: id, escape: false, typ: id, pos: pos}),
+};
+
+Decs: Vec<Box<Dec>> = {
+   <v:(<Dec>)*> => v
+};
+
+Type: Box<Ty> =  {
+   <pos:@L> <id:Ident> => Box::new(NameTy(id, pos)),
+   "{" <fields:Fields> "}" => Box::new(RecordTy(fields)),
+   <pos:@L> "array" "of" <id:Ident> => Box::new(ArrayTy(id, pos)),
+};
+
+Dec: Box<Dec> = {
+   <pos:@L> "type" <id:Ident> "=" <ty:Type> => Box::new(TypeDec{name: id, ty: ty, pos: pos}),
+   <pos:@L> "function" <id:Ident> "(" <fields:Fields> ")" "=" <e:Exp> =>
+      Box::new(FunDec{ name: id, pos: pos, params: fields, body: e, result: None}),
+    <pos:@L> "function" <id:Ident> "(" <fields:Fields> ")" ":" <pos2:@L> <ty:Ident> "=" <e:Exp> =>
+      Box::new(FunDec{ name: id, pos: pos, params: fields, body: e, result: Some((ty, pos2))}),
+    <pos:@L> "var" <id:Ident> "=" <e:Exp> =>
+        Box::new(VarDec{ name: id, pos: pos, init: e, typ: None, escape: false}),
+    <pos:@L> "var" <id:Ident>  ":" <pos2:@L> <ty:Ident> "=" <e:Exp> =>
+        Box::new(VarDec{ name: id, pos: pos, init: e, typ: Some((ty, pos2)), escape: false}),
 };
 
