@@ -1,31 +1,15 @@
 #![feature(plugin)]
 #![plugin(plex)]
 
-pub mod calculator4;
 pub mod lexer;
 pub mod tiger;
 pub mod ast;
 pub mod symbol;
+pub mod types;
 
 extern crate lalrpop_util;
 
 use lexer::Lexer;
-
-#[test]
-fn calculator4() {
-    assert_eq!(&format!("{:?}", calculator4::parse_Expr("22 * 44 + 66").unwrap()),
-    "((22 * 44) + 66)");
-    assert_eq!(&format!("{:?}", calculator4::parse_Exprs("").unwrap()),
-    "[]");
-    assert_eq!(&format!("{:?}", calculator4::parse_Exprs("22 * 44 + 66").unwrap()),
-    "[((22 * 44) + 66)]");
-    assert_eq!(&format!("{:?}", calculator4::parse_Exprs("22 * 44 + 66,").unwrap()),
-    "[((22 * 44) + 66)]");
-    assert_eq!(&format!("{:?}", calculator4::parse_Exprs("22 * 44 + 66, 13*3").unwrap()),
-    "[((22 * 44) + 66), (13 * 3)]");
-    assert_eq!(&format!("{:?}", calculator4::parse_Exprs("22 * 44 + 66, 13*3,").unwrap()),
-    "[((22 * 44) + 66), (13 * 3)]");
-}
 
 fn parse(s: &str) {
     let mut st = symbol::SymbolTable::new();

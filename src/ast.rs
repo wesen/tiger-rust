@@ -1,55 +1,16 @@
-use std::fmt::{Debug, Formatter, Error};
-
-pub enum Expr {
-    Number(i32),
-    Op(Box<Expr>, Opcode, Box<Expr>),
-    Error
-}
-
-#[derive(Copy, Clone)]
-pub enum Opcode {
-    Mul,
-    Div,
-    Add,
-    Sub,
-}
-
-impl Debug for Expr {
-    fn fmt(&self, fmt: &mut Formatter) -> Result<(), Error> {
-        use self::Expr::*;
-        match *self {
-            Number(n) => write!(fmt, "{:?}", n),
-            Op(ref l, op, ref r) => write!(fmt, "({:?} {:?} {:?})", l, op, r),
-            Error => write!(fmt, "error"),
-        }
-    }
-}
-
-impl Debug for Opcode {
-    fn fmt(&self, fmt: &mut Formatter) -> Result<(), Error> {
-        use self::Opcode::*;
-        match *self {
-            Mul => write!(fmt, "*"),
-            Div => write!(fmt, "/"),
-            Add => write!(fmt, "+"),
-            Sub => write!(fmt, "-"),
-        }
-    }
-}
-
 use symbol;
 
 pub type Symbol = symbol::SymbolId;
 pub type Position = usize;
 
-#[derive(Debug)]
+#[derive(Debug,Clone,PartialEq)]
 pub enum Var {
     SimpleVar(Symbol, Position),
     FieldVar(Box<Var>, Symbol, Position),
     SubscriptVar(Box<Var>, Box<Exp>, Position),
 }
 
-#[derive(Debug)]
+#[derive(Debug,Clone,PartialEq)]
 pub enum Exp {
     VarExp(Box<Var>),
     NilExp,
@@ -111,7 +72,7 @@ pub enum Exp {
     },
 }
 
-#[derive(Debug)]
+#[derive(Debug,Clone,PartialEq)]
 pub enum Dec {
     FunDec {
         name: Symbol,
@@ -135,7 +96,7 @@ pub enum Dec {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug,Clone,PartialEq)]
 pub struct Field {
     pub name: Symbol,
     pub escape: bool,
@@ -143,14 +104,14 @@ pub struct Field {
     pub pos: Position,
 }
 
-#[derive(Debug)]
+#[derive(Debug,Clone,PartialEq)]
 pub enum Ty {
     NameTy(Symbol, Position),
     RecordTy(Vec<Box<Field>>),
     ArrayTy(Symbol, Position),
 }
 
-#[derive(Debug)]
+#[derive(Debug,Clone,Copy,PartialEq)]
 pub enum Oper {
     PlusOp,
     MinusOp,
