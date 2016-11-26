@@ -1,30 +1,32 @@
 use symbol::SymbolId;
 
+use std::rc::Rc;
+
 pub type Unique = u32;
 
-#[derive(Debug,PartialEq,Clone)]
-pub enum Ty<'a> {
+#[derive(Debug, PartialEq, Clone)]
+pub enum Ty {
     Int,
     String,
     Nil,
     Record {
         unique: Unique,
-        fields: Vec<(SymbolId, &'a Box<Ty<'a>>)>,
+        fields: Vec<(SymbolId, Rc<Ty>)>,
     },
     Array {
-        typ: &'a Box<Ty<'a>>,
+        typ: Rc<Ty>,
         unique: Unique,
     },
     Unit,
-    Name(SymbolId, Option<&'a Box<Ty<'a>>>),
+    Name(SymbolId, Option<Rc<Ty>>),
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub enum EnvEntry<'a> {
-    VarEntry(&'a Box<Ty<'a>>),
+pub enum EnvEntry {
+    VarEntry(Rc<Ty>),
     FunEntry {
-        formals: Vec<&'a Box<Ty<'a>>>,
-        result: &'a Box<Ty<'a>>
+        formals: Vec<Rc<Ty>>,
+        result: Rc<Ty>,
     }
 }
 
@@ -32,7 +34,7 @@ use std::collections::BTreeMap;
 
 pub struct Table<'a, T: 'a> {
     parent: Option<&'a Table<'a, T>>,
-    map: BTreeMap<SymbolId, Box<T>>,
+    map: BTreeMap<SymbolId, Rc<T>>,
 }
 
 impl<'a, T: 'a> Table<'a, T> {
@@ -43,11 +45,11 @@ impl<'a, T: 'a> Table<'a, T> {
         }
     }
 
-    pub fn enter(&mut self, s: SymbolId, v: Box<T>) {
+    pub fn enter(&mut self, s: SymbolId, v: Rc<T>) {
         self.map.insert(s, v);
     }
 
-    pub fn look(&self, s: SymbolId) -> Option<&Box<T>> {
+    pub fn look(&self, s: SymbolId) -> Option<&Rc<T>> {
         let v = self.map.get(&s);
         match (v, self.parent.as_ref()) {
             (Some(_), _) => v,
@@ -67,8 +69,8 @@ impl<'a, T: 'a> Table<'a, T> {
 
 #[test]
 fn test_table() {
-    let ty = Box::new(Ty::Int);
-    let ty2 = Box::new(Ty::String);
+    let ty = Rc::new(Ty::Int);
+    let ty2 = Rc::new(Ty::String);
 
     let mut table: Table<Ty> = Table::new(None);
     table.enter(0, ty);
@@ -85,36 +87,30 @@ fn test_table() {
     assert_eq!(t2.contains(2), false);
     assert_eq!(&**t2.look(0).unwrap(), &Ty::Int);
     assert_eq!(&**t2.look(1).unwrap(), &Ty::String);
+
+    let ty3 = Rc::new(Ty::Array {
+        typ: t2.look(0).unwrap().clone(),
+        unique: 2
+    });
+    t2.enter(2, ty3);
 }
 
-pub type TypeEnv<'a> = Table<'a, Ty<'a>>;
-pub type ValueEnv<'a> = Table<'a, EnvEntry<'a>>;
+pub type TypeEnv<'a> = Table<'a, Ty>;
+pub type ValueEnv<'a> = Table<'a, EnvEntry>;
 
 #[test]
 fn test_table_refs() {
-//    let mut tenv = TypeEnv::new(None);
-//
-//    let ty = Box::new(Ty::Int);
-//    tenv.enter(0, ty);
-//    let ty = tenv.look(0).unwrap();
-//
-//    let ty2 = Box::new(Ty::Array {
-//        unique: 0,
-//        typ: ty,
-//    });
-//
-//    tenv.enter(1, ty2);
-
-    let mut m : BTreeMap<u32, u32> = BTreeMap::new();
-    {
-        m.insert(0, 1);
-    }
-    let t;
-    {
-        t = *m.get(&0).unwrap();
-    }
-    {
-        m.insert(1, t);
-    }
+    //    let mut tenv = TypeEnv::new(None);
+    //
+    //    let ty = Box::new(Ty::Int);
+    //    tenv.enter(0, ty);
+    //    let ty = tenv.look(0).unwrap();
+    //
+    //    let ty2 = Box::new(Ty::Array {
+    //        unique: 0,
+    //        typ: ty,
+    //    });
+    //
+    //    tenv.enter(1, ty2);
 }
 
