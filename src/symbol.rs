@@ -17,8 +17,8 @@ impl<'a> SymbolTable {
         }
     }
 
-    pub fn name(&'a self, id: &SymbolId) -> Option<&'a String> {
-        self.sym_to_str.get(id)
+    pub fn name(&'a self, id: &SymbolId) -> &'a String {
+        self.sym_to_str.get(id).unwrap()
     }
 
     pub fn symbol(&mut self, s: &str) -> SymbolId {

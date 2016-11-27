@@ -1,5 +1,5 @@
 use ast;
-use types::{Ty, ValueEnv, TypeEnv};
+use types::{Ty, ValueEnv, TypeEnv, EnvEntry};
 use symbol::SymbolTable;
 
 use std::cell::RefCell;
@@ -12,6 +12,7 @@ type Exp = ();
 #[derive(Debug)]
 pub struct ExpTy {
     exp: Exp,
+    // this should be Rc<Ty>
     ty: Ty,
 }
 
@@ -60,7 +61,7 @@ impl<'a> TypeChecker<'a> {
         }
     }
 
-    fn new_with_tenv(&self,  tenv: &'a TypeEnv<'a>) -> TypeChecker<'a> {
+    fn new_with_tenv(&self, tenv: &'a TypeEnv<'a>) -> TypeChecker<'a> {
         TypeChecker {
             symbol_table: self.symbol_table,
             venv: self.venv,
@@ -69,10 +70,47 @@ impl<'a> TypeChecker<'a> {
         }
     }
 
+    fn trans_var(&self, var: &ast::Var) -> Result<ExpTy, String> {
+        match var {
+            &ast::Var::SimpleVar(symbol, pos) => {
+                match self.venv.look(symbol) {
+                    Some(rc_ty) => match rc_ty.as_ref() {
+                        &EnvEntry::VarEntry(ref ty) => Ok(ExpTy { exp: (), ty: ty.as_ref().clone() }),
+                        _ => {
+                            let name = self.symbol_table.name(&symbol);
+                            Err(format!("Unknown variable {} at pos {}", name, pos))
+                        }
+                    },
+                    _ => {
+                        let name = self.symbol_table.name(&symbol);
+                        Err(format!("Unknown variable {} at pos {}", name, pos))
+                    }
+                }
+            },
+            &ast::Var::FieldVar(ref var, symbol, pos) => {
+                // var must be of type RecordTy, and have a field matching symbol
+                Err("unimplemented".to_string())
+            },
+            &ast::Var::SubscriptVar(ref var, ref exp, pos) => {
+                Err("unimplemented".to_string())
+            }
+        }
+    }
+
     pub fn trans_exp(&self, exp: &ast::Exp) -> Result<ExpTy, String> {
         use ast::Oper::*;
 
         match exp {
+            &ast::Exp::VarExp(ref var) => self.trans_var(var),
+
+            &ast::Exp::IntExp(_) => Ok(ExpTy { exp: (), ty: Ty::Int }),
+            &ast::Exp::StringExp(_, _) => Ok(ExpTy { exp: (), ty: Ty::String }),
+            &ast::Exp::NilExp => Ok(ExpTy { exp: (), ty: Ty::Nil }),
+
+            &ast::Exp::CallExp { func, ref args, pos } => {
+                Err("unimplemented".to_string())
+            },
+
             &ast::Exp::OpExp { ref left, op, ref right, pos } => {
                 let ExpTy { ty: left_ty, .. } = self.trans_exp(left)?;
                 let ExpTy { ty: right_ty, .. } = self.trans_exp(right)?;
@@ -96,10 +134,6 @@ impl<'a> TypeChecker<'a> {
                     }
                 }
             },
-
-            &ast::Exp::IntExp(_) => Ok(ExpTy { exp: (), ty: Ty::Int }),
-            &ast::Exp::StringExp(_, _) => Ok(ExpTy { exp: (), ty: Ty::String }),
-            &ast::Exp::NilExp => Ok(ExpTy { exp: (), ty: Ty::Nil }),
 
             &ast::Exp::SeqExp(ref v) => {
                 if v.len() == 0 {
