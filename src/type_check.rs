@@ -89,7 +89,17 @@ impl<'a> TypeChecker<'a> {
             },
             &ast::Var::FieldVar(ref var, symbol, pos) => {
                 // var must be of type RecordTy, and have a field matching symbol
-                Err("unimplemented".to_string())
+                let ExpTy { ty: var_ty, .. } = self.trans_var(var)?;
+                if let Ty::Record { ref fields, .. } = var_ty {
+                    if let Some(field) = fields.iter().find(|&x| x.0 == symbol) {
+                        Ok(ExpTy { exp: (), ty: field.1.as_ref().clone() })
+                    } else {
+                        Err(format!("Var {:?} of type {:?} has no field named {}",
+                                    var, var_ty, symbol))
+                    }
+                } else {
+                    Err(format!("Var {:?} is not a record", var))
+                }
             },
             &ast::Var::SubscriptVar(ref var, ref exp, pos) => {
                 Err("unimplemented".to_string())
@@ -134,6 +144,11 @@ impl<'a> TypeChecker<'a> {
                     }
                 }
             },
+
+            &ast::Exp::RecordExp { ref fields, typ, pos } => {
+                Err("unimplemented".to_string())
+            },
+
 
             &ast::Exp::SeqExp(ref v) => {
                 if v.len() == 0 {
@@ -186,11 +201,11 @@ impl<'a> TypeChecker<'a> {
 
             &ast::Exp::BreakExp(pos) => Ok(ExpTy { ty: Ty::Unit, exp: () }),
 
-            &ast::Exp::RecordExp { ref fields, typ, pos } => {
+            &ast::Exp::LetExp { ref decs, ref body, pos } => {
                 Err("unimplemented".to_string())
             },
 
-            _ => {
+            &ast::Exp::ArrayExp { typ, ref size, ref init, pos } => {
                 Err("unimplemented".to_string())
             },
         }
