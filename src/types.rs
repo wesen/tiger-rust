@@ -9,6 +9,7 @@ pub enum Ty {
     Int,
     String,
     Nil,
+    Bool,
     Record {
         unique: Unique,
         fields: Vec<(SymbolId, Rc<Ty>)>,

@@ -21,7 +21,7 @@ pub enum Exp {
         args: Vec<Box<Exp>>,
         pos: Position,
     },
-    NewExp(Symbol, Position),
+//    NewExp(Symbol, Position),
     OpExp {
         left: Box<Exp>,
         op: Oper,
