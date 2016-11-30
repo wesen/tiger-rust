@@ -1,3 +1,5 @@
+#![allow(dead_code, unused_variables)]
+
 use ast;
 use types::{Ty, ValueEnv, TypeEnv, EnvEntry};
 use symbol::SymbolTable;
@@ -70,11 +72,31 @@ impl<'a> TypeChecker<'a> {
         }
     }
 
+    fn trans_dec(&self, decs: &Vec<Box<ast::Dec>>, body: &Box<ast::Exp>) -> Result<ExpTy, String> {
+        let mut venv = ValueEnv::new(Some(self.venv));
+        let mut tenv = TypeEnv::new(Some(self.tenv));
+
+        for dec in decs.iter() {
+            // dec: &Box<ast::Dec>
+        }
+
+        let tcheck = TypeChecker {
+            symbol_table: self.symbol_table,
+            venv: &venv,
+            tenv: &tenv,
+            unique_gen: self.unique_gen,
+        };
+
+        tcheck.trans_exp(body.as_ref())
+    }
+
     fn trans_var(&self, var: &ast::Var) -> Result<ExpTy, String> {
         match var {
             &ast::Var::SimpleVar(symbol, pos) => {
                 match self.venv.look(symbol) {
                     Some(rc_ty) => match rc_ty.as_ref() {
+                        // ty could be a Name type, which we should catch (return actual types,
+                        // not type aliases)
                         &EnvEntry::VarEntry(ref ty) => Ok(ExpTy { exp: (), ty: ty.as_ref().clone() }),
                         _ => {
                             let name = self.symbol_table.name(&symbol);
@@ -202,7 +224,7 @@ impl<'a> TypeChecker<'a> {
             &ast::Exp::BreakExp(pos) => Ok(ExpTy { ty: Ty::Unit, exp: () }),
 
             &ast::Exp::LetExp { ref decs, ref body, pos } => {
-                Err("unimplemented".to_string())
+                self.trans_dec(decs, body)
             },
 
             &ast::Exp::ArrayExp { typ, ref size, ref init, pos } => {
